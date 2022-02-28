@@ -1,0 +1,13 @@
+#cloud-config
+
+packages:
+  - libreswan
+
+runcmd:
+  - [ ipsec, initnss, --nssdir, /var/lib/ipsec/nss ]
+  - [ ipsec, newhostkey ]
+  - [ ipsec, showhostkey, --list ]
+
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
