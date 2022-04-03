@@ -5,39 +5,63 @@ locals {
   }
 }
 
-resource "aws_vpc" "ipsec" {
-  cidr_block                       = "10.0.0.0/16"
+resource "aws_vpc" "left" {
+  cidr_block                       = "10.0.0.0/24"
   enable_dns_hostnames             = true
   assign_generated_ipv6_cidr_block = false
 
   tags = local.common_tags
 }
 
-resource "aws_internet_gateway" "ipsec" {
-  vpc_id = aws_vpc.ipsec.id
+resource "aws_vpc" "right" {
+  cidr_block                       = "10.0.1.0/24"
+  enable_dns_hostnames             = true
+  assign_generated_ipv6_cidr_block = false
+
+  tags = local.common_tags
+}
+
+resource "aws_internet_gateway" "left" {
+  vpc_id = aws_vpc.left.id
+  tags   = local.common_tags
+}
+
+resource "aws_internet_gateway" "right" {
+  vpc_id = aws_vpc.right.id
   tags   = local.common_tags
 }
 
 resource "aws_subnet" "left" {
-  cidr_block              = cidrsubnet(aws_vpc.ipsec.cidr_block, 8, 1)
-  vpc_id                  = aws_vpc.ipsec.id
+  cidr_block              = cidrsubnet(aws_vpc.left.cidr_block, 2, 0)
+  vpc_id                  = aws_vpc.left.id
   map_public_ip_on_launch = true
   tags                    = local.common_tags
 }
 
 resource "aws_subnet" "right" {
-  cidr_block              = cidrsubnet(aws_vpc.ipsec.cidr_block, 8, 0)
-  vpc_id                  = aws_vpc.ipsec.id
+  cidr_block              = cidrsubnet(aws_vpc.right.cidr_block, 2, 0)
+  vpc_id                  = aws_vpc.right.id
   map_public_ip_on_launch = true
   tags                    = local.common_tags
 }
 
-resource "aws_route_table" "internet" {
-  vpc_id = aws_vpc.ipsec.id
+resource "aws_route_table" "left" {
+  vpc_id = aws_vpc.left.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.ipsec.id
+    gateway_id = aws_internet_gateway.left.id
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_route_table" "right" {
+  vpc_id = aws_vpc.right.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.right.id
   }
 
   tags = local.common_tags
@@ -45,17 +69,40 @@ resource "aws_route_table" "internet" {
 
 resource "aws_route_table_association" "left" {
   subnet_id      = aws_subnet.left.id
-  route_table_id = aws_route_table.internet.id
+  route_table_id = aws_route_table.left.id
 }
 
 resource "aws_route_table_association" "right" {
   subnet_id      = aws_subnet.right.id
-  route_table_id = aws_route_table.internet.id
+  route_table_id = aws_route_table.right.id
 }
 
-resource "aws_security_group" "allow_all" {
+resource "aws_security_group" "allow_all_left" {
   name   = "allow-all"
-  vpc_id = aws_vpc.ipsec.id
+  vpc_id = aws_vpc.left.id
+
+  ingress {
+    description = "Allow all inbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = -1
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "Allow all outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = -1
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_security_group" "allow_all_right" {
+  name   = "allow-all"
+  vpc_id = aws_vpc.right.id
 
   ingress {
     description = "Allow all inbound"
@@ -111,7 +158,6 @@ resource "aws_eip" "right" {
   tags     = local.common_tags
 }
 
-
 data "cloudinit_config" "left" {
   gzip          = false
   base64_encode = false
@@ -135,13 +181,18 @@ data "cloudinit_config" "right" {
     content_type = "text/cloud-config"
     content      = file("${path.root}/data/base.yml")
   }
+
+  part {
+    content_type = "text/cloud-config"
+    content      = file("${path.root}/data/ipsec_right.yml")
+  }
 }
 
 resource "aws_instance" "left" {
   ami                    = data.aws_ami.fedora.id
   instance_type          = "t2.micro"
   user_data              = data.cloudinit_config.left.rendered
-  vpc_security_group_ids = [aws_security_group.allow_all.id]
+  vpc_security_group_ids = [aws_security_group.allow_all_left.id]
   subnet_id              = aws_subnet.left.id
   key_name               = aws_key_pair.ipsec.key_name
   tags                   = merge(local.common_tags, { "Name" = "ipsec-left" })
@@ -151,7 +202,7 @@ resource "aws_instance" "right" {
   ami                    = data.aws_ami.fedora.id
   instance_type          = "t2.micro"
   user_data              = data.cloudinit_config.right.rendered
-  vpc_security_group_ids = [aws_security_group.allow_all.id]
+  vpc_security_group_ids = [aws_security_group.allow_all_right.id]
   subnet_id              = aws_subnet.right.id
   key_name               = aws_key_pair.ipsec.key_name
   tags                   = merge(local.common_tags, { "Name" = "ipsec-right" })
