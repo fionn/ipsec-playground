@@ -14,7 +14,7 @@ resource "aws_vpc" "left" {
 }
 
 resource "aws_vpc" "right" {
-  cidr_block                       = "10.0.1.0/24"
+  cidr_block                       = "10.1.0.0/24"
   enable_dns_hostnames             = true
   assign_generated_ipv6_cidr_block = false
 
