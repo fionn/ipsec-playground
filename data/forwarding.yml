@@ -1,7 +1,0 @@
-write_files:
-  - path: /etc/sysctl.d/95-ip-forwarding.conf
-    content: net.ipv4.ip_forward=1
-    permissions: "0644"
-
-runcmd:
-  - [ sysctl, -p, /etc/sysctl.d/95-ip-forwarding.conf ]

@@ -158,40 +158,20 @@ resource "aws_eip" "right" {
   tags     = local.common_tags
 }
 
-data "cloudinit_config" "left" {
+data "cloudinit_config" "ipsec" {
   gzip          = false
   base64_encode = false
 
   part {
     content_type = "text/cloud-config"
-    content      = file("${path.root}/data/base.yml")
-  }
-
-  part {
-    content_type = "text/cloud-config"
-    content      = file("${path.root}/data/forwarding.yml")
-  }
-}
-
-data "cloudinit_config" "right" {
-  gzip          = false
-  base64_encode = false
-
-  part {
-    content_type = "text/cloud-config"
-    content      = file("${path.root}/data/base.yml")
-  }
-
-  part {
-    content_type = "text/cloud-config"
-    content      = file("${path.root}/data/ipsec_right.yml")
+    content      = file("${path.root}/data/init.yml")
   }
 }
 
 resource "aws_instance" "left" {
   ami                    = data.aws_ami.fedora.id
   instance_type          = "t2.micro"
-  user_data              = data.cloudinit_config.left.rendered
+  user_data              = data.cloudinit_config.ipsec.rendered
   vpc_security_group_ids = [aws_security_group.allow_all_left.id]
   subnet_id              = aws_subnet.left.id
   key_name               = aws_key_pair.ipsec.key_name
@@ -201,7 +181,7 @@ resource "aws_instance" "left" {
 resource "aws_instance" "right" {
   ami                    = data.aws_ami.fedora.id
   instance_type          = "t2.micro"
-  user_data              = data.cloudinit_config.right.rendered
+  user_data              = data.cloudinit_config.ipsec.rendered
   vpc_security_group_ids = [aws_security_group.allow_all_right.id]
   subnet_id              = aws_subnet.right.id
   key_name               = aws_key_pair.ipsec.key_name

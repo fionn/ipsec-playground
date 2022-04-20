@@ -3,10 +3,16 @@
 packages:
   - libreswan
 
+write_files:
+  - path: /etc/sysctl.d/95-ip-forwarding.conf
+    content: "net.ipv4.ip_forward=1\n"
+    permissions: "0644"
+
 runcmd:
   - [ ipsec, initnss, --nssdir, /var/lib/ipsec/nss ]
   - [ ipsec, newhostkey ]
   - [ ipsec, showhostkey, --list ]
+  - [ sysctl, -p, /etc/sysctl.d/95-ip-forwarding.conf ]
 
 package_update: true
 package_upgrade: true
