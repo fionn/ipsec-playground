@@ -45,6 +45,20 @@ resource "aws_subnet" "right" {
   tags                    = local.common_tags
 }
 
+resource "aws_network_interface" "left" {
+  subnet_id         = aws_subnet.left.id
+  security_groups   = [aws_security_group.allow_all_left.id]
+  source_dest_check = false
+  tags              = local.common_tags
+}
+
+resource "aws_network_interface" "right" {
+  subnet_id         = aws_subnet.right.id
+  security_groups   = [aws_security_group.allow_all_right.id]
+  source_dest_check = false
+  tags              = local.common_tags
+}
+
 resource "aws_route_table" "left" {
   vpc_id = aws_vpc.left.id
 
@@ -169,23 +183,31 @@ data "cloudinit_config" "ipsec" {
 }
 
 resource "aws_instance" "left" {
-  ami                    = data.aws_ami.fedora.id
-  instance_type          = "t2.micro"
-  user_data              = data.cloudinit_config.ipsec.rendered
-  vpc_security_group_ids = [aws_security_group.allow_all_left.id]
-  subnet_id              = aws_subnet.left.id
-  key_name               = aws_key_pair.ipsec.key_name
-  tags                   = merge(local.common_tags, { "Name" = "ipsec-left" })
+  ami           = data.aws_ami.fedora.id
+  instance_type = "t2.micro"
+  user_data     = data.cloudinit_config.ipsec.rendered
+  key_name      = aws_key_pair.ipsec.key_name
+
+  network_interface {
+    network_interface_id = aws_network_interface.left.id
+    device_index         = 0
+  }
+
+  tags = merge(local.common_tags, { "Name" = "ipsec-left" })
 }
 
 resource "aws_instance" "right" {
-  ami                    = data.aws_ami.fedora.id
-  instance_type          = "t2.micro"
-  user_data              = data.cloudinit_config.ipsec.rendered
-  vpc_security_group_ids = [aws_security_group.allow_all_right.id]
-  subnet_id              = aws_subnet.right.id
-  key_name               = aws_key_pair.ipsec.key_name
-  tags                   = merge(local.common_tags, { "Name" = "ipsec-right" })
+  ami           = data.aws_ami.fedora.id
+  instance_type = "t2.micro"
+  user_data     = data.cloudinit_config.ipsec.rendered
+  key_name      = aws_key_pair.ipsec.key_name
+
+  network_interface {
+    network_interface_id = aws_network_interface.right.id
+    device_index         = 0
+  }
+
+  tags = merge(local.common_tags, { "Name" = "ipsec-right" })
 }
 
 resource "aws_key_pair" "ipsec" {
