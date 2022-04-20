@@ -9,9 +9,7 @@ First deploy the two servers (`left` and `right`) with `terraform apply`. Then S
 ## Left
 
 ```
-# ipsec showhostkey --list
-< 1> RSA keyid: AwEAAZ+tf ckaid: 0bdebc41f4af704404e8977a53554bc14fd7a617
-# ipsec showhostkey --left --ckaid 0bdebc41f4af704404e8977a53554bc14fd7a617
+# ipsec showhostkey --left --ckaid $(ipsec showhostkey --list | cut -d " " -f 7)
     # rsakey AwEAAZ+tf
 	leftrsasigkey=0sAwEAAZ+tfqA11Teh1uEEX6lxVzj42a+z8ab6q1z6mFsgs6piC9GSciG6kET7UVP+I7XMvK0xIsr+QIMdZaXpX4f9YSccNK6RklsE8ipXpK+inlhOKS1O3xEoFjwy5xO9Q2oifWzQAIg8t0OKZOkHxT2FHsgV1UnVls/MW5L9WTOJ82Xtg8XeQMUrEc4yt7lOSA/5jC1F5/yUhg7/qxIszQDRMarwgtOE/SKOpc/eS05du6eB/cDB8nIrRmfXWpBSCRqYkgoAR9X72EMVdLl9dFFKmggg5SWLO0MzsUv96GENUEiAUjrNHQhmfDOiFCP6mnuXPLQWHLKAXSsydOYJCPWtxwAuWTwcE/Rfbk/UjKMCHBg6gVJSn9kD3AMQMvcUmiMdvG2C+C2OovtJYEof6XRLuPOAjMqj8ceX0cnofDUbUeS4wKl8gSRski4lrd9j+xfe0JFRysLRlTIJKHRzJlskjrL8i372nNipMcOsA7oKTzxdoX2U+IpYnDO+PU5FYy0+hinvZBA+WywkgiRIA8+ZCZIlrYHh5fowCxcguzRuDqfi2qFqh5nFwYxjB8X5Q3/ShC6zATaPTWSnpASpWTTlOo36vy1PCoZl/NRo9/d0fQ5MvkZJ4PrGQnuli+e8xdTIrSrysJTjXPlwlYQtK2lC1i9Bc/9M77Vm9AiX
 ```
@@ -19,9 +17,7 @@ First deploy the two servers (`left` and `right`) with `terraform apply`. Then S
 ## Right
 
 ```
-# ipsec showhostkey --list
-< 1> RSA keyid: AwEAAaeaj ckaid: 6191e5e700a92750210d706e7c43c73e6e11a29f
-# ipsec showhostkey --right --ckaid 6191e5e700a92750210d706e7c43c73e6e11a29f
+# ipsec showhostkey --right --ckaid $(ipsec showhostkey --list | cut -d " " -f 7)
 	# rsakey AwEAAaeaj
 	rightrsasigkey=0sAwEAAaeajY9ablap/X59zrMNFVVjcw7X9J48fDAiNSu5yF7hp7i2NwkL5QeY/Anfnco9dWW3UGuEW1yXBsHse2mQwXjZyQksV5hcJG95ufzyEl7WGlIXbf0wQ8EXBcGYtmRzjdEJc09Bxty/6VqOqBaWt1HRGkTS38g4mgKdEuSpgL+Jsv0NYuHb3RyKrh+OG4RDYwzomx7LGgES2LuBoeY5kdk94AlkGZLIOH0xuELH5HFJSmZv2LO+wzMLj28wP303BEvPOKjRRskA/aZza2Lr/jOPYF8vfNziXC2r/9GowhiU8hWvaV4NorIiBXSzHcm597JCCY3o74VaNARwKpkSEk1cBDk0yGPtpZAWI1z+dsl0YQNQrwWz6ohyaPZpqXCeVOELM3T5ExRWBmaPbgpWSk+bZRPNqsRx5fECGZ7fwjEy+XFiBkR/9KPEEmmFiRmby7D3LXQubLY9DSIJIK0nux6pzvH5usJA3ws4cLJ4lz8G2ePvVXZTOAQdBqJQb5Q09Y/Vv9x1L61+ID5B4mM4n/zhDmdIxeL1MXluAu3znOEF6EtIc3WYZeZBQEXpjCdXdL9AvYbA6wh4xUBpgJY8tRbMtliNvC6zUw==
 ```
