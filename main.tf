@@ -48,6 +48,7 @@ resource "aws_subnet" "right" {
 resource "aws_network_interface" "left" {
   subnet_id         = aws_subnet.left.id
   security_groups   = [aws_security_group.allow_all_left.id]
+  private_ips       = [cidrhost(aws_vpc.left.cidr_block, 4)]
   source_dest_check = false
   tags              = local.common_tags
 }
@@ -55,6 +56,7 @@ resource "aws_network_interface" "left" {
 resource "aws_network_interface" "right" {
   subnet_id         = aws_subnet.right.id
   security_groups   = [aws_security_group.allow_all_right.id]
+  private_ips       = [cidrhost(aws_vpc.right.cidr_block, 4)]
   source_dest_check = false
   tags              = local.common_tags
 }
@@ -163,12 +165,12 @@ data "aws_ami" "fedora" {
 }
 
 resource "aws_eip" "left" {
-  instance = aws_instance.left.id
-  tags     = local.common_tags
+  network_interface = aws_network_interface.left.id
+  tags              = local.common_tags
 }
 
 resource "aws_eip" "right" {
-  instance = aws_instance.right.id
+  network_interface = aws_network_interface.right.id
   tags     = local.common_tags
 }
 
